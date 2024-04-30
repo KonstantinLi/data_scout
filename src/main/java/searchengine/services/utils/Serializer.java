@@ -3,6 +3,8 @@ package searchengine.services.utils;
 import java.io.*;
 
 public class Serializer {
+    private Serializer() {}
+
     public static byte[] serialize(Object object) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(baos);
