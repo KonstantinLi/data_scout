@@ -193,6 +193,8 @@ table().init();
 
 const API = function() {
     let query = document.getElementById("query");
+    let isOnline = navigator.onLine;
+    let isSearchTab = false
 
     function sendData(address, type, data, cb, $this) {
         $.ajax({
@@ -293,15 +295,21 @@ const API = function() {
             $searchResults.find('.SearchResult-amount').text(result.count);
             let scroll = $(window).scrollTop();
             result.data.forEach(function(page){
-                $content.append('<div class="SearchResult-block">' +
-                    '<a href="' + page.site + page.uri +'" target="_blank" class="SearchResult-siteTitle">' +
+                let $block = $('<div class="SearchResult-block">' +
+                    '<a target="_blank" ' +
+                    'class="SearchResult-siteTitle" ' +
+                    'style="cursor: pointer">' +
                     (!data.siteName ? page.siteName + ' - ': '') +
                     page.title +
                     '</a>' +
                     '<div class="SearchResult-description">' +
                     page.snippet +
                     '</div>' +
-                    '</div>')
+                    '</div>');
+                $block.find('.SearchResult-siteTitle').on('click', function() {
+                    displayPage(page.site, page.uri, page.title);
+                });
+                $content.append($block);
             });
             $(window).scrollTop(scroll);
             $searchResults.addClass('SearchResult_ACTIVE');
@@ -455,10 +463,32 @@ const API = function() {
         suggestionsList.style.display = "block";
     }
 
-    query.addEventListener("keyup", function() {
-        let queryText = encodeURIComponent(query.value);
-        getSuggestions(queryText);
-    });
+    async function displayPage(site, path, title) {
+        if (isOnline) {
+            window.open(site + path, "_blank");
+        } else {
+            await fetch("/displayPage?" + new URLSearchParams({
+                site: site,
+                path: path,
+                title: title
+            })).then(response => response.text())
+                .then(htmlContent => {
+                    const newTab = window.open();
+                    newTab.document.write(htmlContent);
+                    newTab.document.close();
+                }).catch(error => console.error('Error fetching page content:', error));
+        }
+    }
+
+    function updateOnlineStatus() {
+        if (isSearchTab) {
+            fetch('/check-internet').then(response => {
+                isOnline = response.ok;
+            }).catch(() => {
+                isOnline = false;
+            });
+        }
+    }
 
     async function saveQuery(query) {
         await fetch("/api/saveQuery", {
@@ -469,6 +499,20 @@ const API = function() {
             body: query
         });
     }
+
+    query.addEventListener("keyup", function() {
+        let queryText = encodeURIComponent(query.value);
+        getSuggestions(queryText);
+    });
+
+    window.addEventListener('load', () => {
+        updateOnlineStatus();
+        setInterval(updateOnlineStatus, 5000);
+    });
+
+    document.getElementById("management_href").addEventListener("click", () => isSearchTab = false);
+    document.getElementById("dashboard_href").addEventListener("click", () => isSearchTab = false);
+    document.getElementById("search_href").addEventListener("click", () => isSearchTab = true);
 
     const send = {
         startIndexing:{
