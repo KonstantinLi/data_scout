@@ -20,6 +20,7 @@ import searchengine.dto.statistics.ErrorResponse;
 import searchengine.dto.statistics.StatisticsResponse;
 import searchengine.exceptions.IndexingException;
 import searchengine.exceptions.NotIndexingException;
+import searchengine.model.Query;
 import searchengine.model.Site;
 import searchengine.services.interfaces.IndexingService;
 import searchengine.services.interfaces.SearchService;
@@ -70,12 +71,11 @@ public class ApiController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<?> search(
+    public ResponseEntity<SearchResponse> search(
             @RequestParam @NotEmpty(message = "Задан пустой поисковой запрос") String query,
             @RequestParam(name = "site", required = false) @URL(
                     regexp = "^http(s)?://[-A-Za-z0-9.]+",
-                    message = "URL адреса сайта должен соответствовать формату http(-s)://www.site.com")
-            String mainUrl,
+                    message = "URL адреса сайта должен соответствовать формату http(-s)://www.site.com") String mainUrl,
             @RequestParam(required = false, defaultValue = "0") @PositiveOrZero(message = "Значение offset должно быть больше или равно 0") Integer offset,
             @RequestParam(required = false, defaultValue = "20") @PositiveOrZero(message = "Значение limit должно быть больше или равно 0") Integer limit) {
 
@@ -86,6 +86,20 @@ public class ApiController {
 
         SearchResponse searchResponse = searchService.search(query, sites, offset, limit);
         return new ResponseEntity<>(searchResponse, HttpStatus.OK);
+    }
+
+    @GetMapping("/suggestions")
+    public List<String> getSuggestions(@RequestParam String query) {
+        return searchService.getSuggestions(query)
+                .stream()
+                .map(Query::getText)
+                .toList();
+    }
+
+    @PostMapping("/saveQuery")
+    public ResponseEntity<Query> saveQuery(@RequestBody String queryText) {
+        Query query = searchService.saveQuery(queryText);
+        return new ResponseEntity<>(query, HttpStatus.OK);
     }
 
     private ResponseEntity<DefaultResponse> defaultResponse() {

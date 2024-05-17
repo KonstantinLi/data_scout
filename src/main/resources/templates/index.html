@@ -133,10 +133,11 @@
                       </div>
                     </div>
                     <div class="form-group form-group_row">
-                      <input class="form-input" id="query" name="query" type="text" placeholder="Query" required/>
+                      <input class="form-input" id="query" name="query" type="text" autocomplete="off" placeholder="Query" required/>
                       <button class="btn btn_primary form-btn" type="submit">Search</button>
                     </div>
                   </form>
+                  <ul id="suggestions"></ul>
                   <div id="spinner"></div>
                   <div class="SearchResult">
                     <strong class="SearchResult-title">Found&#32;<span class="SearchResult-amount">0</span>&#32;results

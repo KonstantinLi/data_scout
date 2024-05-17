@@ -16,19 +16,16 @@ import searchengine.config.properties.LemmaProperties;
 import searchengine.dto.SearchResponse;
 import searchengine.dto.SentenceLemma;
 import searchengine.dto.SnippetItem;
-import searchengine.model.Index;
-import searchengine.model.Lemma;
-import searchengine.model.Page;
-import searchengine.model.Site;
-import searchengine.repositories.IndexRepository;
-import searchengine.repositories.LemmaRepository;
-import searchengine.repositories.PageRepository;
-import searchengine.repositories.SiteRepository;
+import searchengine.model.*;
+import searchengine.repositories.*;
 import searchengine.services.interfaces.SearchService;
 import searchengine.services.interfaces.SiteService;
 import searchengine.services.utils.SentenceUtil;
 import searchengine.services.utils.Serializer;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -42,6 +39,7 @@ public class SearchServiceImpl implements SearchService {
     private final LemmaProperties lemmaProperties;
     private final IndexRepository indexRepository;
     private final LemmaRepository lemmaRepository;
+    private final QueryRepository queryRepository;
     private final PageRepository pageRepository;
     private final SiteRepository siteRepository;
     private final BM25Properties bm25Properties;
@@ -75,6 +73,31 @@ public class SearchServiceImpl implements SearchService {
         }
 
         return makeResponse(query, offset, limit, sites);
+    }
+
+    @Override
+    public List<Query> getSuggestions(String queryText) {
+        String decodedQuery = URLDecoder.decode(queryText, StandardCharsets.UTF_8);
+        return queryRepository.findTop10ByTextStartingWithIgnoreCaseOrderByReachedAtDesc(decodedQuery);
+    }
+
+    @Override
+    public Query saveQuery(String queryText) {
+        Optional<Query> queryOptional = queryRepository.findByText(queryText);
+        if (queryOptional.isPresent()) {
+            Query query = queryOptional.get();
+            query.setReachedAt(LocalDateTime.now());
+            return queryRepository.save(query);
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+
+        Query query = new Query();
+        query.setText(queryText);
+        query.setCreatedAt(now);
+        query.setReachedAt(now);
+
+        return queryRepository.save(query);
     }
 
     private SearchResponse makeResponse(String query, int offset, int limit, List<Site> sites) {

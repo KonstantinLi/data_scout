@@ -192,6 +192,8 @@ const table = function() {
 table().init();
 
 const API = function() {
+    let query = document.getElementById("query");
+
     function sendData(address, type, data, cb, $this) {
         $.ajax({
             url: backendApiUrl + address,
@@ -423,8 +425,51 @@ const API = function() {
         $('.Site-loader').hide(0);
         $('.Site-loadingIsComplete').css('visibility', 'visible').fadeIn(500);
     }
+    async function getSuggestions(queryText) {
+        let suggestionsList = document.getElementById("suggestions");
+        suggestionsList.innerHTML = "";
+        if (queryText.length === 0) {
+            suggestionsList.style.display = "none";
+            return;
+        }
 
-    
+        let response = await fetch("/api/suggestions?" + new URLSearchParams({query: queryText}));
+        let suggestions = await response.json();
+
+        if (suggestions.length === 0) {
+            suggestionsList.style.display = "none";
+            return;
+        }
+
+        suggestions.forEach(suggestion => {
+            let item = document.createElement("li");
+            item.style.cssText = "border-bottom: 1px solid #ddd; cursor: pointer; padding-top: 10px; padding-bottom: 10px";
+            item.textContent = suggestion;
+            item.onclick = function() {
+                query.value = suggestion;
+                suggestionsList.innerHTML = "";
+                suggestionsList.style.display = "none";
+            };
+            suggestionsList.appendChild(item);
+        })
+        suggestionsList.style.display = "block";
+    }
+
+    query.addEventListener("keyup", function() {
+        let queryText = encodeURIComponent(query.value);
+        getSuggestions(queryText);
+    });
+
+    async function saveQuery(query) {
+        await fetch("/api/saveQuery", {
+            method: "POST",
+            headers: {
+                "Content-Type": "text/plain"
+            },
+            body: query
+        });
+    }
+
     const send = {
         startIndexing:{
             address: '/startIndexing',
@@ -505,6 +550,13 @@ const API = function() {
                             break;
                         case 'search':
                             document.getElementById('spinner').style.display = 'block';
+                            let suggestionsList = document.getElementById("suggestions");
+                            suggestionsList.innerHTML = "";
+                            suggestionsList.style.display = "none";
+                            let queryText = document.getElementById("query").value;
+                            if (queryText.length > 0) {
+                                saveQuery(queryText);
+                            }
                             if ($this.data('sendtype')==='next') {
                                 data = {
                                     site: $this.data('searchsite'),
