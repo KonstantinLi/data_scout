@@ -68,8 +68,7 @@ public class SearchServiceImpl implements SearchService {
 
         if (mostPopularLemmas == null) {
             mostPopularLemmas = findMostPopularLemmas(
-                    produceLemmasWithIDF(lemmaRepository.findAll(), siteRepository.findAll()),
-                    sites);
+                    produceLemmasWithIDF(lemmaRepository.findAll(), siteRepository.findAll()));
         }
 
         return makeResponse(query, offset, limit, sites);
@@ -248,7 +247,7 @@ public class SearchServiceImpl implements SearchService {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-    private List<String> findMostPopularLemmas(Map<String, Double> lemmasWithIDF, List<Site> sites) {
+    private List<String> findMostPopularLemmas(Map<String, Double> lemmasWithIDF) {
         return lemmasWithIDF.entrySet()
                 .stream()
                 .sorted(Map.Entry.comparingByValue())
@@ -258,7 +257,7 @@ public class SearchServiceImpl implements SearchService {
     }
 
     private Map<String, Double> lemmasInQueryWithIDF(String query, List<Site> sites) {
-        List<Lemma> lemmasInQuery = lemmaRepository.findAllByLemmaIn(
+        List<Lemma> lemmasInQuery = lemmaRepository.findAllByLemmaTextIn(
                 lemmaFinder.collectLemmas(query).keySet());
 
         return produceLemmasWithIDF(lemmasInQuery, sites);
@@ -269,7 +268,7 @@ public class SearchServiceImpl implements SearchService {
 
         Map<String, Double> totalFrequency = new HashMap<>();
         for (Lemma lemmaObject : lemmas) {
-            String lemma = lemmaObject.getLemma();
+            String lemma = lemmaObject.getLemmaText();
             Double oldFrequency = totalFrequency.getOrDefault(lemma, 0.0);
             totalFrequency.put(lemma, oldFrequency + lemmaObject.getFrequency());
         }

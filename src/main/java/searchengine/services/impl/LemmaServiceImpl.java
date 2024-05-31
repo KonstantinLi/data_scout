@@ -3,6 +3,8 @@ package searchengine.services.impl;
 import lombok.RequiredArgsConstructor;
 import org.apache.lucene.morphology.LuceneMorphology;
 import org.jsoup.Jsoup;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import searchengine.config.properties.LemmaProperties;
@@ -20,6 +22,8 @@ import java.util.*;
 @Component
 @RequiredArgsConstructor
 public class LemmaServiceImpl implements LemmaService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(LemmaServiceImpl.class);
+
     private final LuceneMorphology luceneMorphology;
     private final LemmaRepository lemmaRepository;
     private final IndexRepository indexRepository;
@@ -36,7 +40,7 @@ public class LemmaServiceImpl implements LemmaService {
         String clearHTML = Jsoup.parse(page.getContent()).text();
         Map<String, Integer> lemmaData = collectLemmas(clearHTML);
 
-        List<Lemma> lemmas = lemmaRepository.findAllByLemmaIn(lemmaData.keySet());
+        List<Lemma> lemmas = lemmaRepository.findAllByLemmaTextIn(lemmaData.keySet());
         Iterator<Map.Entry<String, Integer>> iterator = lemmaData.entrySet().iterator();
 
         Queue<Index> indexQueue = new LinkedList<>();
@@ -64,7 +68,7 @@ public class LemmaServiceImpl implements LemmaService {
 
         if (lemma == null) {
             lemma = new Lemma();
-            lemma.setLemma(lemmaValue);
+            lemma.setLemmaText(lemmaValue);
             lemma.setSite(site);
         }
         lemma.incrementFrequency();
@@ -94,7 +98,9 @@ public class LemmaServiceImpl implements LemmaService {
 
                 Integer repeat = lemmas.getOrDefault(firstNormalForm, 0);
                 lemmas.put(firstNormalForm, repeat + 1);
-            } catch (RuntimeException ignore) {}
+            } catch (RuntimeException ex) {
+                LOGGER.warn("Some issues with lemmas collection was occurred");
+            }
         }
 
         return lemmas;
@@ -131,7 +137,7 @@ public class LemmaServiceImpl implements LemmaService {
                 .filter(lemma1 -> {
                     String lemmaSiteUrl = lemma1.getSite().getUrl();
 
-                    return lemma1.getLemma().equals(lemmaValue)
+                    return lemma1.getLemmaText().equals(lemmaValue)
                             && lemmaSiteUrl.equals(url);
                 })
                 .findAny().orElse(null);

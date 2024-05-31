@@ -18,6 +18,7 @@ import searchengine.dto.SearchResponse;
 import searchengine.dto.statistics.DefaultResponse;
 import searchengine.dto.statistics.ErrorResponse;
 import searchengine.dto.statistics.StatisticsResponse;
+import searchengine.exceptions.ApiException;
 import searchengine.exceptions.IndexingException;
 import searchengine.exceptions.NotIndexingException;
 import searchengine.model.Query;
@@ -62,7 +63,7 @@ public class ApiController {
     @PostMapping(value = "/indexPage", consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE})
     public ResponseEntity<DefaultResponse> indexPage(@Valid @AvailablePage PageData pageData, BindingResult bindingResult) {
         if (bindingResult.hasErrors())
-            throw new RuntimeException(getErrorMessages(bindingResult));
+            throw new ApiException(getErrorMessages(bindingResult));
 
         throwIfIndexing();
         indexingService.indexPage(pageData);

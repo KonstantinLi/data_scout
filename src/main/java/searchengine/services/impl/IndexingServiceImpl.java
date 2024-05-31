@@ -125,7 +125,7 @@ public class IndexingServiceImpl implements IndexingService {
         isIndexing.set(true);
 
         String url = getUrl(pageData);
-        LOGGER.info("Start indexing page: " + url);
+        LOGGER.info(String.format("Start indexing page: %s", url));
 
         PageIntrospect pageIntrospect = new PageIntrospect(url);
         RecursiveWebParser recursiveWebParser = createRecursiveWebParser(pageIntrospect);
@@ -141,7 +141,7 @@ public class IndexingServiceImpl implements IndexingService {
 
         if (pageExecutor != null) {
             pageExecutor = null;
-            LOGGER.info("End indexing page: " + url);
+            LOGGER.info(String.format("End indexing page: %s", url));
         }
 
         isIndexing.set(false);
@@ -159,12 +159,12 @@ public class IndexingServiceImpl implements IndexingService {
             if (!isNotTimeout) {
                 shutdownNowAndAwait(pool);
                 failedSiteIfIndexing(site, "TIMEOUT");
-                LOGGER.warn("Site " + name + "[" + url + "] indexing TIMEOUT");
+                LOGGER.warn(String.format("Site %s[%s] indexing TIMEOUT", name, url));
             } else if (site.getStatus() == Status.INDEXING) {
                 site.setLastError(null);
                 site.setStatus(Status.INDEXED);
                 siteRepository.save(site);
-                LOGGER.debug("Site " + name + "[" + url + "] has been indexed");
+                LOGGER.debug(String.format("Site %s[%s] has been indexed", name, url));
             }
         } catch (InterruptedException ex) {
             failedSiteIfIndexing(site, ex.getMessage());

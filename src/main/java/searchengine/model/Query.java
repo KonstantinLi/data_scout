@@ -21,6 +21,6 @@ public class Query {
     @Column(name = "created_at", columnDefinition = "TIMESTAMP", nullable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "reached_at", columnDefinition = "TIMESTASMP", nullable = false)
+    @Column(name = "reached_at", columnDefinition = "TIMESTAMP", nullable = false)
     private LocalDateTime reachedAt;
 }

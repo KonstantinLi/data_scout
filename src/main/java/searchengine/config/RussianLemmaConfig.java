@@ -5,6 +5,7 @@ import org.apache.lucene.morphology.russian.RussianLuceneMorphology;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import searchengine.exceptions.LuceneException;
 
 import java.io.IOException;
 
@@ -20,7 +21,7 @@ public class RussianLemmaConfig {
         try {
             return new RussianLuceneMorphology();
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new LuceneException("russian");
         }
     }
 }

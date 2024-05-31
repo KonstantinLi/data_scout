@@ -7,6 +7,8 @@ import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
 import org.springframework.http.HttpStatus;
@@ -36,7 +38,9 @@ import java.util.stream.Collectors;
 @Scope("prototype")
 @RequiredArgsConstructor
 @Setter
-public class RecursiveWebParser extends RecursiveAction implements Cloneable {
+public class RecursiveWebParser extends RecursiveAction {
+    private static final Logger LOGGER = LoggerFactory.getLogger(RecursiveWebParser.class);
+
     private final LemmaProperties lemmaProperties;
     private final PropertiesUtil propertiesUtil;
     private final IndexRepository indexRepository;
@@ -52,6 +56,27 @@ public class RecursiveWebParser extends RecursiveAction implements Cloneable {
     private PageIntrospect page;
     private ForkJoinPool pool;
     private Site site;
+
+    public static RecursiveWebParser create(RecursiveWebParser template) {
+        RecursiveWebParser parser = new RecursiveWebParser(
+                template.lemmaProperties,
+                template.propertiesUtil,
+                template.indexRepository,
+                template.pageRepository,
+                template.lemmaService,
+                template.siteService,
+                template.pageQueue,
+                template.pageQueueLock,
+                template.jedis
+        );
+
+        parser.setBatchSize(template.batchSize);
+        parser.setPage(template.page);
+        parser.setPool(template.pool);
+        parser.setSite(template.site);
+
+        return parser;
+    }
 
     @SneakyThrows(WebParserInterruptedException.class)
     @Override
@@ -85,7 +110,8 @@ public class RecursiveWebParser extends RecursiveAction implements Cloneable {
             recursiveWebParsers.forEach(RecursiveAction::join);
             shutDownPoolIfExecuted();
 
-        } catch (IOException ignored) {
+        } catch (IOException ex) {
+            LOGGER.warn("Parsing issue:", ex);
         } catch (InterruptedException ex) {
             throw new WebParserInterruptedException(page.getDomain());
         }
@@ -94,20 +120,20 @@ public class RecursiveWebParser extends RecursiveAction implements Cloneable {
     public Callable<Void> pageIndexingCallable() {
         String mainUrl = page.getMainUrl();
         String path = page.getPath();
-        Site site = propertiesUtil.getSiteByUrlInConfig(mainUrl);
+        Site siteInConfig = propertiesUtil.getSiteByUrlInConfig(mainUrl);
 
         return () -> {
             try {
-                Page page = pageRepository.findBySiteAndPath(site, path);
+                Page indexingPage = pageRepository.findBySiteAndPath(siteInConfig, path);
 
-                if (page == null) {
+                if (indexingPage == null) {
                     parsePage();
-                    page = pageRepository.save(getPage());
+                    indexingPage = pageRepository.save(getPage());
                 } else {
-                    indexRepository.deleteAllByPage(page);
-                    lemmaService.decrementLemmaFrequencyOrDelete(page);
+                    indexRepository.deleteAllByPage(indexingPage);
+                    lemmaService.decrementLemmaFrequencyOrDelete(indexingPage);
                 }
-                lemmaService.saveLemmas(page);
+                lemmaService.saveLemmas(indexingPage);
 
                 return null;
             } catch (IOException ex) {
@@ -133,14 +159,14 @@ public class RecursiveWebParser extends RecursiveAction implements Cloneable {
     }
 
     private Page getPage() {
-        Page page = new Page();
-        page.setPath(this.page.getPath());
-        page.setContent(this.page.getContent());
-        page.setCode(this.page.getCode());
-        page.setLength(pageLength());
-        page.setSite(site);
+        Page newPage = new Page();
+        newPage.setPath(page.getPath());
+        newPage.setContent(page.getContent());
+        newPage.setCode(page.getCode());
+        newPage.setLength(pageLength());
+        newPage.setSite(site);
 
-        return page;
+        return newPage;
     }
 
     private int pageLength() {
@@ -176,15 +202,11 @@ public class RecursiveWebParser extends RecursiveAction implements Cloneable {
     }
 
     private RecursiveWebParser getChildParser(PageIntrospect child) {
-        try {
-            RecursiveWebParser childParser = clone();
-            childParser.setPage(child);
-            childParser.setPool(pool);
-            childParser.setSite(site);
-            return childParser;
-        } catch (CloneNotSupportedException ex) {
-            throw new RuntimeException(ex);
-        }
+        RecursiveWebParser childParser = RecursiveWebParser.create(this);
+        childParser.setPage(child);
+        childParser.setPool(pool);
+        childParser.setSite(site);
+        return childParser;
     }
 
     private Connection.Response urlConnect(String url) throws IOException {
@@ -211,10 +233,5 @@ public class RecursiveWebParser extends RecursiveAction implements Cloneable {
 
     private boolean isValidUrl(String url) {
         return url.matches("^(https?)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]");
-    }
-
-    @Override
-    protected RecursiveWebParser clone() throws CloneNotSupportedException {
-        return (RecursiveWebParser) super.clone();
     }
 }

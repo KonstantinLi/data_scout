@@ -20,7 +20,7 @@ public interface PageRepository extends JpaRepository<Page, Integer> {
     @Query("SELECT DISTINCT p FROM Page p " +
             "JOIN Index i ON i.page = p " +
             "JOIN Lemma l ON i.lemma = l " +
-            "WHERE l.lemma = ?1 AND p.site IN (?2)")
+            "WHERE l.lemmaText = ?1 AND p.site IN (?2)")
     List<Page> findAllByLemmaAndSiteIn(String lemma, List<Site> sites);
 
     @Query("SELECT AVG(p.length) FROM Page p")

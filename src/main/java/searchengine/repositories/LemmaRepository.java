@@ -15,7 +15,7 @@ import java.util.List;
 public interface LemmaRepository extends JpaRepository<Lemma, Integer> {
     int countBySite(Site site);
 
-    List<Lemma> findAllByLemmaIn(Collection<String> values);
+    List<Lemma> findAllByLemmaTextIn(Collection<String> values);
 
     List<Lemma> findAllBySite(Site site, Pageable pageable);
 

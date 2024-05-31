@@ -17,7 +17,7 @@ import java.util.Optional;
 public interface IndexRepository extends JpaRepository<Index, Integer> {
     @Query("FROM Index i " +
             "JOIN Lemma l ON i.lemma = l " +
-            "WHERE i.page = ?1 AND l.lemma = ?2")
+            "WHERE i.page = ?1 AND l.lemmaText = ?2")
     Optional<Index> findByPageAndLemma(Page page, String lemma);
 
     @Transactional

@@ -18,8 +18,8 @@ public class Lemma {
     @ManyToOne(optional = false)
     private Site site;
 
-    @Column(columnDefinition = "VARCHAR(255)", nullable = false)
-    private String lemma;
+    @Column(name = "lemma", columnDefinition = "VARCHAR(255)", nullable = false)
+    private String lemmaText;
 
     @Column(nullable = false)
     private Integer frequency;

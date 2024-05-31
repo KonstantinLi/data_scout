@@ -5,6 +5,7 @@ import org.apache.lucene.morphology.english.EnglishLuceneMorphology;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import searchengine.exceptions.LuceneException;
 
 import java.io.IOException;
 
@@ -22,7 +23,7 @@ public class EnglishLemmaConfig {
         try {
             return new EnglishLuceneMorphology();
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new LuceneException("english");
         }
     }
 }
