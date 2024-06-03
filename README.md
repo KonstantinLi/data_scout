@@ -2,7 +2,7 @@
 
 <p align="center">
 
-<img alt="GitHub Gist last commit" src="https://img.shields.io/github/gist/last-commit/0523482c53f3aa963133e33a8b6c0b4c">
+<img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/KonstantinLi/search_engine">
 <img alt="GitHub issues" src="https://img.shields.io/github/issues-raw/KonstantinLi/search_engine?color=%23FFC146">
 <img alt="GitHub watchers" src="https://img.shields.io/github/watchers/KonstantinLi/search_engine?logo=github">
 <img alt="GitHub contributors" src="https://img.shields.io/github/contributors/KonstantinLi/search_engine">
@@ -103,58 +103,42 @@ ___
 ## Instructions for running the program locally
 
 ### System requirements
-
->**Processor**: 4-Core Intel Xeon 500 Sequence, AMD Athlon X4 Bristol Ridge
+#### Minimal configuration
+>**Processor**: Intel Core i3-12100F, AMD Ryzen 5 2600X
 >
->**RAM**: 8GB RAM
+>**RAM**: 8 GB RAM
 >
 >**Hard disk space**: 10 GB
+> 
+>**Internet connection**: 50 Mbps
+
+#### Recommend configuration
+>**Processor**: Intel Core i5-12500H, AMD Ryzen 5 5500
+>
+>**RAM**: 16 GB RAM
+>
+>**Hard disk space**: 20 GB
+>
+>**Internet connection**: 100 Mbps
 
 ### Procedure
-+ First you need to create an empty database in PostgreSQL. You can come up with any name.
++ First, you need to download Docker Desktop to deploy your system. The current version of the application can be 
+downloaded from the official website [Docker](https://www.docker.com/products/docker-desktop/).
 
-+ Clone the project to your working directory:
++ Download the archive with the necessary files according to your OS:
+  + Windows: [csc-engine-windows.zip](./release/csc-engine-windows.zip)
+  + Linux/macOS: [csc-engine-linux.zip](./release/csc-engine-linux.zip)
 
-```git clone https://github.com/KonstantinLi/search_engine```
++ Unzip the archive to any directory.
 
-+ Open the project in any IDE with support for the Maven builder.
-  Recommended by **IntelliJ IDEA Ultimate Edition** for lightweight work with Spring and database tools.
-  + Java: 17+
-  + PostgreSQL: 15+
++ The archive contains the following files:
+  + **docker-compose.yml** - file to deploy the web application
+  + **application.yaml** - configuration file
+  + **deploy.bat** для Windows або **deploy.sh** для Linux/macOS - executable file
 
-+ Create a startup configuration for the Spring Boot project, in which you need to specify:
-  + **Application** class annotated with @SpringBootApplication
-  + Project name optional
-  + Java 17+
-  + It is recommended to specify the **-Xmx4096M** property in the VM options, which means 4 GB of memory allocated for the application
++ Run the executable file. This can be done by double-clicking on the file, or through the command line. Note that when 
+running a file in Linux, you need to give it the appropriate rights, for this, enter the command `sudo chmod +x deploy.sh`.
 
-+ The project from the box contains the default configuration file **application.properties**, which connects the built-in HSQLDB database, but its application
-  not recommended in production. Therefore, in the **src/main/resources/config** folder, create the **application.yaml** file and specify the following configuration:
++ The application has been successfully launched. To enter the interface, open the page in a web browser at the link **localhost:8081**.
 
-```yaml
-spring:
-  datasource:
-    username: user
-    password: pass
-    url: jdbc:postgresql://localhost:port/database?useSSL=false&reWriteBatchedInserts=true
-
-  jpa:
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQL95Dialect
-
-indexing-settings:
-  sites:
-    - url: https://www.site.com
-      name: site-name
-```
-
-+ Enter your database data:
-  + ***user*** - username
-  + ***pass*** - password
-  + ***port*** - reserved port
-  + ***database*** - database name
-
-+ In **indexing-settings.sites** enter your list of **url-name** values of indexed sites.
-
-+ By setting the **spring.jpa.show-sql** property to **true**, all SQL queries will be visible in the console.vvvvv
+Enjoy! :sunglasses:

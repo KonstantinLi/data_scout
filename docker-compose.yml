@@ -1,0 +1,54 @@
+version: '3.8'
+services:
+  redis:
+    image: "redis"
+    ports:
+      - "6379:6379"
+    networks:
+      - search_net
+    restart: always
+
+  postgres:
+    image: "postgres"
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123123
+      POSTGRES_DB: search_engine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - search_net
+    restart: unless-stopped
+
+  searchengine:
+    image: speciallink/searchengine
+    depends_on:
+      - redis
+      - postgres
+    ports:
+      - "8081:8081"
+    volumes:
+      - ./application.yaml:/config/application.yaml
+    networks:
+      - search_net
+    environment:
+      SERVER_PORT: 8081
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SPRING_CONFIG_LOCATION: /config/application.yaml
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/search_engine?useSSL=false&reWriteBatchedInserts=true
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 123123
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.PostgreSQLDialect
+      SPRING_JPA_PROPERTIES_HIBERNATE_JDBC_BATCH_SIZE: 50
+    entrypoint: ["dockerize", "-wait", "tcp://redis:6379", "-wait", "tcp://postgres:5432", "-timeout", "10s", "java", "-jar", "/searchEngine.jar"]
+
+volumes:
+  postgres_data:
+
+networks:
+  search_net:
+    driver: bridge
