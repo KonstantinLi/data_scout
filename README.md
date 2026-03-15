@@ -1,4 +1,4 @@
-<h1 align="center">Local Search Engine</h1>
+<h1 align="center">DataScout</h1>
 
 <p align="center">
 
@@ -16,7 +16,7 @@
 
 ## Description
 
-**Local Search Engine** is a high-tech, load-tolerant tool that provides an API based on smart algorithms
+**DataScout** is a high-tech, load-tolerant tool that provides an API based on smart algorithms
 for indexing and further analysis of the content of sites and their child elements - pages.
 
 All information that has been processed by the built-in parser is stored
